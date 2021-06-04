@@ -38,15 +38,21 @@ namespace NotepadApplication
         {
             if (!filePath.Equals(DEFAULT_FILE_NAME))
             {
-                StreamReader sd = new StreamReader(filePath);
-                string textInFile = sd.ReadToEnd();
-                if (!textInFile.Equals(textBox1.Text))
+                try
                 {
-                    confirmDialog(filePath);
-                }
-                else
+                    StreamReader sd = new StreamReader(filePath);
+                    string textInFile = sd.ReadToEnd();
+                    if (!textInFile.Equals(textBox1.Text))
+                    {
+                        confirmDialog(filePath);
+                    }
+                    else
+                    {
+                        clearPathAndTextBox();
+                    }
+                }catch(Exception ex)
                 {
-                    clearPathAndTextBox();
+                    MessageBox.Show(ex.Message);
                 }
             }
             else
@@ -68,17 +74,30 @@ namespace NotepadApplication
         //
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.InitialDirectory = "E:\\";
-            openFileDialog.Filter = "Sql File(*.sql)|*.sql|Text File (*.txt)|*.txt|All Files (*.*)|*.*";
-            openFileDialog.FilterIndex = 2;
-            openFileDialog.RestoreDirectory = true;
-            if(openFileDialog.ShowDialog() == DialogResult.OK)
-            { 
-                filePath = openFileDialog.FileName;
-                var fileStream = openFileDialog.OpenFile();
-                System.IO.StreamReader reader = new StreamReader(fileStream);
-                textBox1.Text = reader.ReadToEnd();
+
+            if (!filePath.Equals(DEFAULT_FILE_NAME))
+            {
+                try
+                {
+                    StreamReader sd = new StreamReader(filePath);
+                    string textInFile = sd.ReadToEnd();
+                    if (!textInFile.Equals(textBox1.Text))
+                    {
+                        confirmDialog(filePath);
+                    }
+                    openFile();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+            }
+            else
+            {
+                if (!textBox1.Text.Equals(""))
+                {
+                    openFile();
+                }
             }
         }
         //
@@ -107,7 +126,38 @@ namespace NotepadApplication
         //
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.Dispose();
+            if (!filePath.Equals(DEFAULT_FILE_NAME))
+            {
+                StreamReader sd  = null;
+                try
+                {
+                    sd = new StreamReader(filePath);
+                    string textInFile = sd.ReadToEnd();
+                    if (!textInFile.Equals(textBox1.Text))
+                    {
+                        confirmDialog(filePath);
+                    }
+                    
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                finally
+                {
+                    sd.Close();
+                    this.Dispose();
+                }
+            }
+            else
+            {
+                if (!textBox1.Text.Equals(""))
+                {
+                    confirmDialog(filePath);
+                }
+                this.Dispose();
+
+            }
         }
 
 
@@ -131,18 +181,24 @@ namespace NotepadApplication
         }
         private void writeTextToFile(string fileName)
         {
-            using (StreamWriter sw = new StreamWriter(fileName))
+            try
             {
-                sw.WriteLine(textBox1.Text);
-                sw.Close();
-            }
-            if (filePath.Equals(DEFAULT_FILE_NAME))
+                using (StreamWriter sw = new StreamWriter(fileName))
+                {
+                    sw.WriteLine(textBox1.Text);
+                    sw.Close();
+                }
+                if (filePath.Equals(DEFAULT_FILE_NAME))
+                {
+                    fileName = "*Untitled";
+                }
+                else
+                {
+                    fileName = Path.GetFileName(filePath);
+                }
+            }catch(Exception ex)
             {
-                fileName = "*Untitled";
-            }
-            else
-            {
-                fileName = Path.GetFileName(filePath);
+                MessageBox.Show(ex.Message);
             }
             
             this.Text = fileName + " - Notepad";
@@ -225,6 +281,29 @@ namespace NotepadApplication
         {
             filePath = DEFAULT_FILE_NAME;
             textBox1.Text = "";
+        }
+        private void openFile()
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.InitialDirectory = "E:\\";
+            openFileDialog.Filter = "Sql File(*.sql)|*.sql|Text File (*.txt)|*.txt|All Files (*.*)|*.*";
+            openFileDialog.FilterIndex = 2;
+            openFileDialog.RestoreDirectory = true;
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                filePath = openFileDialog.FileName;
+                var fileStream = openFileDialog.OpenFile();
+                try
+                {
+                    System.IO.StreamReader reader = new StreamReader(fileStream);
+                    textBox1.Text = reader.ReadToEnd();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+
+            }
         }
         private System.Windows.Forms.ToolStripItem[] genarateFontFamily()
         {
